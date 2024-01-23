@@ -2,7 +2,6 @@ AmpliconGeneration.c*
 AmpliconGeneration.html
 amplicon_generation.c*
 
-.idea
 *.out
 *.sbatch
 
@@ -17,3 +16,4 @@ preprocessing/influenza
 preprocessing/Pox
 preprocessing/*.py
 results
+.idea/
