@@ -42,7 +42,7 @@ def generate_comparison_matrix():
         Dictionary with character tuples as keys, and boolean tuples as values.
 
     '''
-    chars = ['a','c','t','g','u','r','y','k','m','s','w','b','d','h','v','n','-']
+    chars = ['a','c','t','g','u','r','y','k','m','s','w','b','d','h','v','n','-', '8']
     char_comp = {
                 'a' : ['a','r','m','w','d','h','v'],
                 'c' : ['c','y','m','s','b','h','v'],
@@ -59,7 +59,8 @@ def generate_comparison_matrix():
                 'd' : ['a','g','t','u','r','y','k','m','s','w','b','d','h','v'],
                 'h' : ['a','c','t','u','r','y','k','m','s','w','b','d','h','v'],
                 'v' : ['a','c','g','r','y','k','m','s','w','b','d','h','v'],
-                '-' : ['-']
+                '-' : ['-'],
+                '8' : ['8']
         }
     comparison_matrix = {}
     for c1 in chars:
@@ -112,7 +113,8 @@ def reverse_complement(sequence, rev=True):
             'h' : 'd',
             'v' : 'b',
             'n' : 'n',
-            '-' : '-'
+            '-' : '-',
+            '8' : '8'
         }
     rev_comp = ''
     for i in range(len(sequence)):
@@ -190,6 +192,35 @@ def calculate_degeneracy(sequence):
         elif char == 'n':
             degen = degen*4
     return degen
+
+def calculate_degeneracy_with_segment(sequence):
+    '''
+    Function that returns the degeneracy of a sequence of nucleotides which is defined as the
+    cardinality of the set of all possible non-degenerate representations of the sequence.
+
+    Parameters
+    ----------
+    sequence : str
+        String representation of a series of consecutive nucleotides.
+
+    Returns
+    -------
+    degen : int
+        Degeneracy of the input sequence.
+
+    '''
+    degen = 1
+    segment = False
+    for char in sequence:
+        if char in ['y', 'r', 's', 'w', 'm', 'k']:
+            degen = degen*2
+        elif char in ['b', 'd', 'h', 'v']:
+            degen = degen*3
+        elif char == 'n':
+            degen = degen*4
+        elif char == '8':
+            segment = True
+    return degen, segment
 
 def calculate_GC(sequence):
     '''

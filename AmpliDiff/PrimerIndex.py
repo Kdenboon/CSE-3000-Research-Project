@@ -3,7 +3,8 @@ import copy
 import itertools
 import multiprocessing as mp
 from math import ceil
-from classless_methods import generate_comparison_matrix, calculate_degeneracy, disambiguate, reverse_complement
+from classless_methods import generate_comparison_matrix, calculate_degeneracy, disambiguate, reverse_complement, \
+    calculate_degeneracy_with_segment
 from Primer import *
 
 class PrimerIndex():
@@ -226,20 +227,24 @@ class PrimerIndex():
             for offset in range(search_width - primer_width + 1): #this iterates over the possible primers within the search range
                 #Iterate over forward primers for this sequence
                 current_fwd_primer = sequence.sequence_raw[forward_end_index - primer_width - offset : forward_end_index - offset]
-                if calculate_degeneracy(current_fwd_primer) <= 4**5: #only proceed if the sequence is not "too degenerate"
-                    for forward_primer in disambiguate(current_fwd_primer):
-                        if forward_primer in self.primer2index['forward']:
-                            if self.index2primer['forward'][self.primer2index['forward'][forward_primer]].feasible:
-                                amplicon.primers['forward'][sequence.id_num].add(self.primer2index['forward'][forward_primer])
-                                amplicon.full_primerset['forward'].add(self.primer2index['forward'][forward_primer])
-                #Iterate over reverse primers for this sequence        
+                degen, segment = calculate_degeneracy_with_segment(current_fwd_primer)
+                if not segment:
+                    if degen <= 4**5: #only proceed if the sequence is not "too degenerate"
+                        for forward_primer in disambiguate(current_fwd_primer):
+                            if forward_primer in self.primer2index['forward']:
+                                if self.index2primer['forward'][self.primer2index['forward'][forward_primer]].feasible:
+                                    amplicon.primers['forward'][sequence.id_num].add(self.primer2index['forward'][forward_primer])
+                                    amplicon.full_primerset['forward'].add(self.primer2index['forward'][forward_primer])
+                #Iterate over reverse primers for this sequence
                 current_rev_primer = reverse_complement(sequence.sequence_raw[reverse_start_index + offset : reverse_start_index + primer_width + offset])
-                if calculate_degeneracy(current_rev_primer) <= 4**5:
-                    for reverse_primer in disambiguate(current_rev_primer):
-                        if reverse_primer in self.primer2index['reverse']:
-                            if self.index2primer['reverse'][self.primer2index['reverse'][reverse_primer]].feasible:
-                                amplicon.primers['reverse'][sequence.id_num].add(self.primer2index['reverse'][reverse_primer])
-                                amplicon.full_primerset['reverse'].add(self.primer2index['reverse'][reverse_primer])
+                degen,segment = calculate_degeneracy_with_segment(current_rev_primer)
+                if not segment:
+                    if degen <= 4**5:
+                        for reverse_primer in disambiguate(current_rev_primer):
+                            if reverse_primer in self.primer2index['reverse']:
+                                if self.index2primer['reverse'][self.primer2index['reverse'][reverse_primer]].feasible:
+                                    amplicon.primers['reverse'][sequence.id_num].add(self.primer2index['reverse'][reverse_primer])
+                                    amplicon.full_primerset['reverse'].add(self.primer2index['reverse'][reverse_primer])
 
     def update_conflict_matrix(self, primers):
         '''
@@ -342,27 +347,31 @@ class PrimerIndex():
             for sequence in sequences:
                 for cur_index in range(sequence.length_raw - width + 1):
                     current_fwd_primer = sequence.sequence_raw[cur_index : cur_index + width]
-                    if calculate_degeneracy(current_fwd_primer) <= max_degeneracy:
-                        for forward_primer in disambiguate(current_fwd_primer):
-                            primer_index.add_sequence(sequence, cur_index, forward_primer, 'forward')
-                    current_rev_primer = reverse_complement(current_fwd_primer)
-                    if calculate_degeneracy(current_rev_primer) <= max_degeneracy:
-                        for reverse_primer in disambiguate(current_rev_primer):
-                            primer_index.add_sequence(sequence, cur_index, reverse_primer, 'reverse')
+                    degen, segment = calculate_degeneracy_with_segment(current_fwd_primer)
+                    if not segment:
+                        if degen <= max_degeneracy:
+                            for forward_primer in disambiguate(current_fwd_primer):
+                                primer_index.add_sequence(sequence, cur_index, forward_primer, 'forward')
+                        current_rev_primer = reverse_complement(current_fwd_primer)
+                        if calculate_degeneracy(current_rev_primer) <= max_degeneracy:
+                            for reverse_primer in disambiguate(current_rev_primer):
+                                primer_index.add_sequence(sequence, cur_index, reverse_primer, 'reverse')
                 i += 1
         else: #If a singular sequence is supplied
             for cur_index in range(sequences.length_raw - width + 1):
                 current_fwd_primer = sequences.sequence_raw[cur_index : cur_index + width]
-                if calculate_degeneracy(current_fwd_primer) <= max_degeneracy:
-                    for forward_primer in disambiguate(current_fwd_primer):
-                        primer_index.add_sequence(sequences, cur_index, forward_primer, 'forward')
-                current_rev_primer = reverse_complement(current_fwd_primer)
-                if calculate_degeneracy(current_rev_primer) <= max_degeneracy:
-                    for reverse_primer in disambiguate(current_rev_primer):
-                        primer_index.add_sequence(sequences, cur_index, reverse_primer, 'reverse')
+                degen, segment = calculate_degeneracy_with_segment(current_fwd_primer)
+                if not segment:
+                    if degen <= max_degeneracy:
+                        for forward_primer in disambiguate(current_fwd_primer):
+                            primer_index.add_sequence(sequences, cur_index, forward_primer, 'forward')
+                    current_rev_primer = reverse_complement(current_fwd_primer)
+                    if calculate_degeneracy(current_rev_primer) <= max_degeneracy:
+                        for reverse_primer in disambiguate(current_rev_primer):
+                            primer_index.add_sequence(sequences, cur_index, reverse_primer, 'reverse')
             i += 1
         return primer_index
-    
+
     @staticmethod
     def generate_index_mp(sequences, width, comparison_matrix, max_degeneracy=4**5, processors=1):
         if processors > 1:

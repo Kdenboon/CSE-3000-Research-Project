@@ -1,10 +1,18 @@
 AmpliconGeneration.c*
 AmpliconGeneration.html
+amplicon_generation.c*
 
 *.out
 *.sbatch
 
+MSA_stuff/
+delftBlue/
 fast_output/
 output/
 testing/
 build/
+preprocessing/HIV
+preprocessing/influenza
+preprocessing/Pox
+preprocessing/*.py
+results

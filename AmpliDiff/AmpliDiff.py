@@ -76,7 +76,7 @@ def main():
     #Process sequences
     print('Processing sequences')
     sequences, lb, ub, feasible_amplicons, relevant_nucleotides = process_sequences(sequences, min_non_align=args.min_non_align, 
-                                                                                    amplicon_width=args.amplicon_width, max_misalign=args.max_misalign)
+                                                                                    amplicon_width=args.amplicon_width, max_misalign=args.max_misalign, search_window=args.search_width)
     with open(args.output + '/runtimes_' + str(args.seed) + '.txt', 'a') as f:
         f.write('Time spent processing sequences and determining feasible amplicons: ' + str(time.time() - st) + ', number of feasible amplicons: ' + str(len(feasible_amplicons)) + '\n')
     print('Done processing sequences')
@@ -131,6 +131,7 @@ def main():
     PrimerIndex.PrimerIndex.set_thresholds(thresholds)
     print('Generating primer index')
     primer_index = PrimerIndex.PrimerIndex.generate_index_mp(sequences, args.primer_width, comparison_matrix, max_degeneracy=args.max_primer_degeneracy, processors=args.cores)
+    print("Finished generating, removing redundants: " + str(time.time() - st))
     primer_index.remove_redundant()
     with open(args.output + '/runtimes_' + str(args.seed) + '.txt', 'a') as f:
         f.write('Time spent generating primer index and filtering for feasible primers: ' + str(time.time() - st) + '\n')
