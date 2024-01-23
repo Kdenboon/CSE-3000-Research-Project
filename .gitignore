@@ -2,6 +2,7 @@ AmpliconGeneration.c*
 AmpliconGeneration.html
 amplicon_generation.c*
 
+.idea
 *.out
 *.sbatch
 
